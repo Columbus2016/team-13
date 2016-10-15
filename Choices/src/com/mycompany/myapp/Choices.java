@@ -1,10 +1,12 @@
 package com.mycompany.myapp;
 
 import com.codename1.ui.Button;
+import com.codename1.ui.ComboBox;
 import com.codename1.ui.Component;
 import com.codename1.ui.Dialog;
 import com.codename1.ui.Display;
 import com.codename1.ui.Form;
+import com.codename1.ui.Label;
 import com.codename1.ui.TextArea;
 import com.codename1.ui.TextField;
 import com.codename1.ui.Toolbar;
@@ -14,6 +16,8 @@ import com.codename1.ui.plaf.UIManager;
 import com.codename1.ui.table.TableLayout;
 import com.codename1.ui.util.Resources;
 
+import components.simplereader.SimpleReader;
+import components.simplereader.SimpleReader1L;
 import components.simplewriter.SimpleWriter;
 import components.simplewriter.SimpleWriter1L;
 
@@ -36,16 +40,26 @@ public class Choices {
         // Log.bindCrashProtection(true);
     }
 
+    private static double getGPA() {
+        double sum = 0;
+        double gpa = 0;
+        int count = 0;
+        SimpleReader gpaIn = new SimpleReader1L("data/gpa.txt");
+        while (!gpaIn.atEOS()) {
+            sum += gpaIn.nextDouble();
+            count++;
+        }
+
+        gpa = sum / count;
+
+        return gpa;
+    }
+
     public void start() {
         if (this.current != null) {
             this.current.show();
             return;
         }
-
-        /*
-         * Form hi = new Form("Hi World"); hi.addComponent(new Label("Hi World"
-         * )); hi.show();
-         */
 
         TableLayout t1;
         int spanButton = 2;
@@ -53,38 +67,60 @@ public class Choices {
         t1 = new TableLayout(9, 1);
         t1.setGrowHorizontally(true);
         hi.setLayout(t1);
-
         TextField firstName = new TextField("", "First Name", 20, TextArea.ANY);
         TextField stateName = new TextField("", "State", 20, TextArea.ANY);
-        TextField genderName = new TextField("", "Gender", 20, TextArea.ANY);
+        ComboBox<String> genCombo = new ComboBox<>();
+        genCombo.addItem("Male");
+        genCombo.addItem("Female");
+        genCombo.addItem("Other");
         TextField raceName = new TextField("", "Race", 20, TextArea.ANY);
         Button submit = new Button("Submit");
-//        ComboBox<Map<String, Object>> stateCombo = new ComboBox<> (
-        //             createListEntry("Alabama", "dsa")
-        // createListEntry("Alaska", "Wow")
-        //);
-
-        TableLayout.Constraint cn = t1.createConstraint();
-        cn.setHorizontalSpan(spanButton);
-        cn.setVerticalSpan(Component.RIGHT);
-
         hi.add("First Name").add(firstName);
         hi.add("State").add(stateName);
-        hi.add("Gender").add(genderName);
+        hi.add("Gender").add(genCombo);
         hi.add("Race").add(raceName);
         hi.add(submit);
-
-        submit.setHidden(true);
         hi.show();
 
+        TableLayout t2;
+        int spanButton2 = 2;
+        Form mainPage = new Form();
+        t2 = new TableLayout(4, 1);
+        t2.setGrowHorizontally(true);
+        mainPage.setLayout(t2);
+        Label title = new Label("Choices");
+
+        title.setAlignment(Component.CENTER);
+        Button contact = new Button("Contact");
+        Button stats = new Button("Stats");
+        Button settings = new Button("Settings");
+        mainPage.add(title);
+        mainPage.add(contact);
+        mainPage.add(stats);
+        mainPage.add(settings);
+
+        TableLayout t3;
+        int spanButton3 = 3;
+        Form statsPage = new Form();
+        t3 = new TableLayout(1, 1);
+        t3.setGrowHorizontally(true);
+        statsPage.setLayout(t3);
+        Label statsTitle = new Label("Stats");
+        statsTitle.setAlignment(Component.CENTER);
+        Button back = new Button("Back");
+        Label statsLabel = new Label("Default");
+        Label statsGPA = new Label("Default");
+        statsLabel.setAlignment(Component.CENTER);
+        statsPage.add(statsLabel);
+        statsPage.add("GPA").add(statsGPA);
+        statsPage.add(back);
         submit.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent submitPressed) {
 
                 String name = firstName.getText();
-
+                String gender = genCombo.getSelectedItem();
                 String state = stateName.getText();
-                String gender = genderName.getText();
                 String race = raceName.getText();
 
                 SimpleWriter nameOut = new SimpleWriter1L("data/name.txt");
@@ -96,7 +132,46 @@ public class Choices {
                 stateOut.println(state);
                 genderOut.println(gender);
                 raceOut.println(race);
+                nameOut.close();
+                stateOut.close();
+                genderOut.close();
+                raceOut.close();
+                mainPage.show();
+            }
+        });
 
+        contact.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent contactPressed) {
+                //          contactPage.show();
+            }
+        });
+
+        stats.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent statsPressed) {
+
+                SimpleReader nameIn = new SimpleReader1L("data/name.txt");
+                String statsName = nameIn.nextLine();
+                statsLabel.setText(statsName + "'s Stats");
+                statsGPA.setText(Double.toString(getGPA()));
+                nameIn.close();
+
+                statsPage.show();
+            }
+        });
+
+        settings.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent settingsPressed) {
+                //         settingsPage.show();
+            }
+        });
+
+        back.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent backPressed) {
+                mainPage.show();
             }
         });
 
