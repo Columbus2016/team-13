@@ -30,6 +30,14 @@ public class Choices {
     private Form current;
     private Resources theme;
 
+    final class ContactData {
+        public String name;
+        public String uniqueId;
+        public String imageUrl;
+        public double gpa;
+        public int year;
+    }
+
     public void init(Object context) {
         this.theme = UIManager.initFirstTheme("/theme");
 
@@ -40,6 +48,7 @@ public class Choices {
         // Log.bindCrashProtection(true);
     }
 
+//Function that takes the cumulative GPA of the student at any point
     private static double getGPA() {
         double sum = 0;
         double gpa = 0;
@@ -55,18 +64,48 @@ public class Choices {
         return gpa;
     }
 
+//Starts the application
     public void start() {
         if (this.current != null) {
             this.current.show();
             return;
         }
 
+//Creates the main page
+        TableLayout t2;
+        Form mainPage = new Form();
+        t2 = new TableLayout(4, 1);
+        t2.setGrowHorizontally(true);
+        mainPage.setLayout(t2);
+        SimpleReader startGameIn = new SimpleReader1L("data/intro/startup.txt");
+        int startup = startGameIn.nextInteger();
+        startup++;
+        String startString = Integer.toString(startup);
+        startGameIn.close();
+        SimpleWriter startGame = new SimpleWriter1L("data/intro/startup.txt");
+        startGame.println(startup);
+        startGame.close();
+        TableLayout.Constraint mainPageConstraint = t2.createConstraint();
+        mainPageConstraint.setHeightPercentage(16);
+//Creates the buttons and text of the main page
+        Label title = new Label("Choices");
+        title.setAlignment(Component.CENTER);
+        Button contact = new Button("Contact");
+        Button stats = new Button("Stats");
+        Button settings = new Button("Settings");
+        mainPage.addComponent(mainPageConstraint, title);
+        mainPage.add(mainPageConstraint, contact);
+        mainPage.add(mainPageConstraint, stats);
+        mainPage.add(mainPageConstraint, settings);
+
+//Creates the first time page which only appears the first time you open the game
         TableLayout t1;
-        int spanButton = 2;
         Form hi = new Form();
         t1 = new TableLayout(9, 1);
+        Messaging messages = new Messaging();
         t1.setGrowHorizontally(true);
         hi.setLayout(t1);
+//Asks for demographic information and stores it in text files
         TextField firstName = new TextField("", "First Name", 20, TextArea.ANY);
         TextField stateName = new TextField("", "State", 20, TextArea.ANY);
         ComboBox<String> genCombo = new ComboBox<>();
@@ -80,29 +119,17 @@ public class Choices {
         hi.add("Gender").add(genCombo);
         hi.add("Race").add(raceName);
         hi.add(submit);
-        hi.show();
+        SimpleReader visitedIn = new SimpleReader1L("data/intro/visited.txt");
+        if (visitedIn.nextLine().equals("false")) {
+            hi.show();
+        } else {
+            mainPage.show();
 
-        TableLayout t2;
-        int spanButton2 = 2;
-        Form mainPage = new Form();
-        t2 = new TableLayout(4, 1);
-        t2.setGrowHorizontally(true);
-        mainPage.setLayout(t2);
-        Label title = new Label("Choices");
-
-        title.setAlignment(Component.CENTER);
-        Button contact = new Button("Contact");
-        Button stats = new Button("Stats");
-        Button settings = new Button("Settings");
-        mainPage.add(title);
-        mainPage.add(contact);
-        mainPage.add(stats);
-        mainPage.add(settings);
-
+        }
+//Creates the stats page with the GPA of the student
         TableLayout t3;
-        int spanButton3 = 3;
         Form statsPage = new Form();
-        t3 = new TableLayout(1, 1);
+        t3 = new TableLayout(3, 1);
         t3.setGrowHorizontally(true);
         statsPage.setLayout(t3);
         Label statsTitle = new Label("Stats");
@@ -110,10 +137,33 @@ public class Choices {
         Button back = new Button("Back");
         Label statsLabel = new Label("Default");
         Label statsGPA = new Label("Default");
+        Label startUp = new Label("Default");
         statsLabel.setAlignment(Component.CENTER);
+        statsGPA.setAlignment(Component.CENTER);
         statsPage.add(statsLabel);
         statsPage.add("GPA").add(statsGPA);
+        statsPage.add("Times Started").add(startUp);
         statsPage.add(back);
+        //Creates the settings page that changes the amount of weeks for the game to be played
+        TableLayout t4;
+        Form settingsPage = new Form();
+        t4 = new TableLayout(4, 1);
+        t4.setGrowHorizontally(true);
+        settingsPage.setLayout(t4);
+        Label settingsTitle = new Label("Settings");
+        settingsTitle.setAlignment(Component.CENTER);
+        Button settingsBack = new Button("Back");
+        Label settingsWeeks = new Label("Weeks");
+        settingsWeeks.setAlignment(Component.CENTER);
+        ComboBox<Integer> settingsDays = new ComboBox<>();
+        settingsDays.addItem(2);
+        settingsDays.addItem(3);
+        settingsDays.addItem(4);
+        settingsPage.add(settingsTitle);
+        settingsPage.add(settingsWeeks);
+        settingsPage.add(settingsDays);
+        settingsPage.add(settingsBack);
+        //Stores the first time demographic information when the submit button is pressed on the first time screen
         submit.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent submitPressed) {
@@ -123,11 +173,19 @@ public class Choices {
                 String state = stateName.getText();
                 String race = raceName.getText();
 
-                SimpleWriter nameOut = new SimpleWriter1L("data/name.txt");
-                SimpleWriter stateOut = new SimpleWriter1L("data/state.txt");
-                SimpleWriter genderOut = new SimpleWriter1L("data/gender.txt");
-                SimpleWriter raceOut = new SimpleWriter1L("data/race.txt");
-
+                SimpleWriter nameOut = new SimpleWriter1L(
+                        "data/intro/name.txt");
+                SimpleWriter stateOut = new SimpleWriter1L(
+                        "data/intro/state.txt");
+                SimpleWriter genderOut = new SimpleWriter1L(
+                        "data/intro/gender.txt");
+                SimpleWriter raceOut = new SimpleWriter1L(
+                        "data/intro/race.txt");
+                SimpleWriter visitedOut = new SimpleWriter1L(
+                        "data/intro/visited.txt");
+                visitedOut.clear();
+                visitedOut.println("true");
+                visitedOut.close();
                 nameOut.println(name);
                 stateOut.println(state);
                 genderOut.println(gender);
@@ -139,44 +197,60 @@ public class Choices {
                 mainPage.show();
             }
         });
-
+//Shows the contact page when the contact button is pressed
         contact.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent contactPressed) {
-                //          contactPage.show();
+                messages.showContactsForm(Messaging.user);
             }
         });
-
+//Shows the stats page when the stats button is pressed
         stats.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent statsPressed) {
 
-                SimpleReader nameIn = new SimpleReader1L("data/name.txt");
+                SimpleReader nameIn = new SimpleReader1L("data/intro/name.txt");
                 String statsName = nameIn.nextLine();
                 statsLabel.setText(statsName + "'s Stats");
                 statsGPA.setText(Double.toString(getGPA()));
+                startUp.setText(startString);
                 nameIn.close();
 
                 statsPage.show();
             }
         });
-
+//Shows the settings page when the settings button is pressed
         settings.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent settingsPressed) {
                 //         settingsPage.show();
+                settingsPage.show();
             }
         });
-
+//Shoes the main page when the back button is pressed
         back.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent backPressed) {
                 mainPage.show();
             }
         });
+//Shoes the main page when the back button is pressed from the settings page
+        settingsBack.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent settingsBackPressed) {
+                Integer weeks = settingsDays.getSelectedItem();
+                SimpleWriter weeksOut = new SimpleWriter1L(
+                        "data/settings/weeks.txt");
+
+                weeksOut.println(weeks);
+                weeksOut.close();
+                mainPage.show();
+            }
+        });
 
     }
 
+//Stops the application
     public void stop() {
         this.current = Display.getInstance().getCurrent();
         if (this.current instanceof Dialog) {
